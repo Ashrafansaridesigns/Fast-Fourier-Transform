@@ -1,0 +1,56 @@
+`timescale 1ns / 1ps
+
+module fft_test_tb;
+    reg clk;
+    reg reset;
+    reg enable;
+    reg [2:0] rom_addr;
+    wire [15:0] serial_real_out;
+    wire [15:0] serial_imag_out;
+    wire serial_valid;
+    wire valid_out;
+    fft_test dut (
+        .clk(clk),
+        .reset(reset),
+        .enable(enable),
+        .rom_addr(rom_addr),
+        .serial_real_out(serial_real_out),
+        .serial_imag_out(serial_imag_out),
+        .serial_valid(serial_valid),
+        .valid_out(valid_out)
+    );
+
+    // Clock generation
+    always #5 clk = ~clk; // 100 MHz clock
+
+    initial begin
+        // Initialize
+        clk = 0;
+        reset = 1;
+        enable = 0;
+        rom_addr = 0;
+
+        // Apply reset
+        #20;
+        reset = 0;
+        enable = 1;
+
+        // Feed 8 samples into the ROM (simulate 8 cycles)
+        repeat (8) begin
+            #10;
+            rom_addr = rom_addr + 1;
+        end
+
+        // Wait for FFT and serial output
+        #200;
+
+        $finish;
+    end
+
+    // Monitor output
+    initial begin
+        $monitor("Time=%0t | Addr=%0d | Serial Real=%h | Serial Imag=%h | Valid=%b | FFT Valid=%b", 
+                 $time, rom_addr, serial_real_out, serial_imag_out, serial_valid, valid_out);
+    end
+
+endmodule
